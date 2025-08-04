@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-server-config
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-server-config
+    app.kubernetes.io/part-of: argocd
+data:
+  # Enable insecure mode for easier setup (use proper TLS in production)
+  server.insecure: "true"
+  
+  # Repository configuration
+  repositories: |
+    - url: https://github.com/smith-ai-1/models-router
+      name: model-router
+      type: git
+      
+  # Application configuration
+  application.instanceLabelKey: argocd.argoproj.io/instance

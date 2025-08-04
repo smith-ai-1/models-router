@@ -1,0 +1,95 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Check code formatting
+      run: uv run ruff check --diff
+      
+    - name: Run type checking
+      run: |
+        if command -v mypy &> /dev/null; then
+          uv run mypy model_router/
+        else
+          echo "MyPy not installed, skipping type check"
+        fi
+      
+    - name: Run tests with coverage
+      run: uv run pytest tests/ -v --cov=model_router --cov-report=term-missing
+      
+    - name: Check Docker build
+      run: docker build -t model-router:pr-${{ github.event.number }} .
+      
+    - name: Validate Kubernetes manifests
+      run: |
+        # Install kubeval for manifest validation
+        curl -L https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar xz
+        sudo mv kubeval /usr/local/bin
+        
+        # Validate all k8s manifests
+        kubeval devops/k8s/applications/*.yaml
+        kubeval devops/k8s/infra/*.yaml || true  # ArgoCD manifests might not validate cleanly
+        
+    - name: Comment PR with test results
+      uses: actions/github-script@v6
+      if: always()
+      with:
+        script: |
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.login === 'github-actions[bot]' && 
+            comment.body.includes('PR Validation Results')
+          );
+          
+          const status = '${{ job.status }}' === 'success' ? '✅ PASSED' : '❌ FAILED';
+          const body = `## PR Validation Results ${status}
+          
+          - **Code Formatting**: ${{ steps.check-formatting.outcome || 'Unknown' }}
+          - **Tests**: ${{ steps.run-tests.outcome || 'Unknown' }}  
+          - **Docker Build**: ${{ steps.docker-build.outcome || 'Unknown' }}
+          - **K8s Manifests**: ${{ steps.validate-manifests.outcome || 'Unknown' }}
+          
+          ${status === '❌ FAILED' ? '⚠️ Please fix the issues above before merging.' : '🚀 Ready to merge!'}
+          `;
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+          }

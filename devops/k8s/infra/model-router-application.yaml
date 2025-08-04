@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: model-router
+  namespace: argocd
+  labels:
+    app: model-router
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/smith-ai-1/models-router
+    targetRevision: main
+    path: devops/k8s/applications
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: model-router
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    
+  revisionHistoryLimit: 10

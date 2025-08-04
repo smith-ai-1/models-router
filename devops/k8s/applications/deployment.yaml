@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-router
+  namespace: model-router
+  labels:
+    app: model-router
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: model-router
+  template:
+    metadata:
+      labels:
+        app: model-router
+        version: v1
+    spec:
+      containers:
+      - name: model-router
+        image: model-router:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: TESTING
+          value: "false"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: model-router-secrets
+              key: openai-api-key
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: model-router-secrets
+              key: anthropic-api-key
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: model-router-secrets
+              key: groq-api-key
+        - name: DEEPSEEK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: model-router-secrets
+              key: deepseek-api-key
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
