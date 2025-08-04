@@ -11,10 +11,26 @@ from openai import OpenAI
 os.environ["TESTING"] = "true"
 
 from model_router.main import app
+from model_router.main_configuration import main_configuration, initialize_sample_data
+import inject
+
+
+@pytest.fixture(scope="session")
+def initialized_config():
+    """Initialize dependency injection configuration once per test session."""
+    import asyncio
+    
+    # Configure dependency injection
+    inject.configure_once(main_configuration)
+    
+    # Initialize sample data
+    asyncio.run(initialize_sample_data())
+    
+    return True
 
 
 @pytest.fixture
-def test_client():
+def test_client(initialized_config):
     """FastAPI test client."""
     return TestClient(app)
 

@@ -26,6 +26,10 @@ from model_router.services.adapters.deepseek import DeepSeekAdapter, MockDeepSee
 from model_router.services.adapters.groq import GroqAdapter, MockGroqAdapter
 from model_router.services.adapters.openai import MockOpenAIAdapter, OpenAIAdapter
 from model_router.services.model_router import ModelRouterService
+from model_router.main_configuration import get_user_token_service
+from model_router.services.user_token_service import UserTokenService
+from model_router.services.user_service import UserService
+import inject
 
 
 # Create router service instance
@@ -55,20 +59,21 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
-def get_call_context(request: Request) -> CallContext:
+async def get_call_context(request: Request) -> CallContext:
     """Dependency to create CallContext from FastAPI request."""
     # Validate authorization header is present
     auth_header = request.headers.get("authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
-    # Extract user_id from Authorization header or other sources
-    # For now, using None - can be enhanced later with JWT parsing
-    user_id = None
-    if auth_header and auth_header.startswith("Bearer "):
-        # Here you could decode JWT token to get user_id
-        # user_id = decode_jwt_token(auth_header[7:])
-        pass
+    # Extract token from Bearer header
+    token = auth_header[7:]  # Remove "Bearer " prefix
+    
+    # Get user UID from token service using inject
+    user_token_service = inject.instance(UserTokenService)
+    user_id = await user_token_service.get_user_uid_by_token(token)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid API key")
 
     return CallContext(user_id=user_id)
 
@@ -126,6 +131,32 @@ async def list_providers(
     """List all configured providers and their status."""
     logger.info("Listing providers", call_context=call_context)
     return await router_service.get_provider_info(call_context)
+
+
+@router.get("/v1/user/me")
+async def get_current_user(
+    call_context: CallContext = Depends(get_call_context)
+):
+    """Get current user information."""
+    logger.info("Getting current user information", call_context=call_context)
+    
+    if not call_context.user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+    
+    # Get user service using inject
+    user_service = inject.instance(UserService)
+    user = await user_service.get_user_by_uid(call_context.user_id, call_context)
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "uid": user.uid,
+        "email": user.email,
+        "additional_info": user.additional_info,
+        "created_at": user.created_at.isoformat(),
+        "updated_at": user.updated_at.isoformat()
+    }
 
 
 @router.get("/health")
