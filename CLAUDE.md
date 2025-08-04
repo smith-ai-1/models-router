@@ -18,10 +18,11 @@ Follow the comprehensive development workflow documented in [.ai/workflows/dev_w
 
 ## Architecture
 
-- **FastAPI application** with OpenAI-compatible endpoints (`/v1/models`, `/v1/chat/completions`)
-- **Provider pattern** with abstract base class and concrete implementations
-- **Prefix-based routing** using `provider/model-name` format
-- **Dynamic model listing** from provider instances rather than static configuration
+See [.ai/architecture.md](./.ai/architecture.md) for comprehensive architectural documentation including:
+- Provider pattern implementation
+- Prefix-based routing system  
+- API design principles
+- Testing strategies
 
 ## Testing Strategy
 

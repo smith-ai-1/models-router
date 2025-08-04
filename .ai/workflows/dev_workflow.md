@@ -31,28 +31,11 @@ This document describes the recommended development workflow for the Model Route
 ### 5. Git Workflow
 - **Staged commits**: Add all changes with `git add .`
 - **Descriptive messages**: Write clear commit messages explaining the changes
-- **Include attribution**: End commits with Claude Code attribution block
 - **Push immediately**: Push changes after successful commit
 
-## Architecture Principles
+## Architecture
 
-### Provider Pattern
-- Each AI provider should extend `BaseProvider`
-- Implement `get_available_models()` and `create_chat_completion()`
-- Use dependency injection for API keys
-- Handle provider-specific errors appropriately
-
-### Prefix-based Routing
-- All models use provider prefixes: `provider/model-name`
-- Strip prefixes when sending requests to actual providers
-- Maintain backward compatibility when possible
-- Validate model existence before routing
-
-### Testing Strategy
-- Use `mock_all_providers_env` fixture for multi-provider tests
-- Create separate test files for different concerns
-- Test both direct API calls and SDK integration
-- Include negative test cases (invalid models, missing keys, etc.)
+See [../architecture.md](../architecture.md) for detailed architectural principles, patterns, and design decisions.
 
 ## Code Standards
 
