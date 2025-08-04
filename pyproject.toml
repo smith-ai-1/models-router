@@ -1,0 +1,31 @@
+[project]
+name = "model-router"
+version = "0.1.0"
+description = "AI model routing service"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/model_router"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.7",
+]
