@@ -12,6 +12,11 @@ class BaseProvider(ABC):
         self.api_key = api_key
 
     @abstractmethod
+    def get_available_models(self) -> list[str]:
+        """Get list of available models for this provider."""
+        pass
+
+    @abstractmethod
     async def create_chat_completion(
         self,
         model: str,

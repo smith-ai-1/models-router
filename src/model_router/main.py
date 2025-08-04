@@ -13,6 +13,9 @@ from openai.types.chat import (
 )
 from pydantic import BaseModel
 
+from .providers.anthropic_provider import AnthropicProvider
+from .providers.deepseek_provider import DeepSeekProvider
+from .providers.groq_provider import GroqProvider
 from .providers.openai_provider import OpenAIProvider
 
 load_dotenv()
@@ -41,23 +44,15 @@ class ModelsResponse(BaseModel):
     data: list[dict[str, Any]]
 
 
-# Model provider mapping
-MODEL_PROVIDERS = {
-    "gpt-3.5-turbo": "openai",
-    "gpt-4": "openai",
-    "gpt-4-turbo": "openai",
-    "gpt-4o": "openai",
-    "gpt-4o-mini": "openai",
-    "claude-3-sonnet": "anthropic",
-    "claude-3-opus": "anthropic",
-    "claude-3-haiku": "anthropic",
-    "claude-3-5-sonnet": "anthropic",
-    "llama-3.1-70b": "groq",
-    "llama-3.1-8b": "groq",
-    "mixtral-8x7b": "groq",
-    "deepseek-chat": "deepseek",
-    "deepseek-coder": "deepseek",
+# Model provider prefixes
+PROVIDER_PREFIXES = {
+    "openai/": "openai",
+    "anthropic/": "anthropic",
+    "groq/": "groq",
+    "deepseek/": "deepseek",
 }
+
+
 
 
 def get_provider(provider_name: str):
@@ -67,6 +62,25 @@ def get_provider(provider_name: str):
         if not api_key:
             raise HTTPException(status_code=401, detail="OpenAI API key not configured")
         return OpenAIProvider(api_key)
+    elif provider_name == "anthropic":
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise HTTPException(
+            status_code=401, detail="Anthropic API key not configured"
+        )
+        return AnthropicProvider(api_key)
+    elif provider_name == "groq":
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=401, detail="Groq API key not configured")
+        return GroqProvider(api_key)
+    elif provider_name == "deepseek":
+        api_key = os.getenv("DEEPSEEK_API_KEY")
+        if not api_key:
+            raise HTTPException(
+            status_code=401, detail="DeepSeek API key not configured"
+        )
+        return DeepSeekProvider(api_key)
     else:
         raise HTTPException(
             status_code=404,
@@ -74,21 +88,49 @@ def get_provider(provider_name: str):
         )
 
 
+def get_provider_for_model(model_name: str) -> str:
+    """Get provider for a model based on prefix."""
+    for prefix, provider in PROVIDER_PREFIXES.items():
+        if model_name.startswith(prefix):
+            return provider
+
+    raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
+
+
+def get_actual_model_name(model_name: str) -> str:
+    """Get the actual model name to send to provider (strip prefix if present)."""
+    for prefix in PROVIDER_PREFIXES:
+        if model_name.startswith(prefix):
+            return model_name[len(prefix):]
+    return model_name
+
+
 @app.get("/v1/models")
 async def list_models():
-    """List available models."""
-    models = [
-        {
-            "id": model_id,
-            "object": "model",
-            "created": int(time.time()),
-            "owned_by": provider,
-            "permission": [],
-            "root": model_id,
-            "parent": None,
-        }
-        for model_id, provider in MODEL_PROVIDERS.items()
-    ]
+    """List available models from all providers."""
+    models = []
+
+    # Get models from each provider
+    for prefix, provider_name in PROVIDER_PREFIXES.items():
+        try:
+            # Try to get provider instance (this will check API keys)
+            provider_instance = get_provider(provider_name)
+            available_models = provider_instance.get_available_models()
+
+            # Add models with prefix
+            for model_name in available_models:
+                models.append({
+                    "id": f"{prefix}{model_name}",
+                    "object": "model",
+                    "created": int(time.time()),
+                    "owned_by": provider_name,
+                    "permission": [],
+                    "root": f"{prefix}{model_name}",
+                    "parent": None,
+                })
+        except HTTPException:
+            # Skip providers that don't have API keys configured
+            continue
 
     return ModelsResponse(data=models)
 
@@ -104,26 +146,30 @@ async def create_chat_completion(
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
-    # Get provider for model
-    provider = MODEL_PROVIDERS.get(request.model)
-    if not provider:
-        raise HTTPException(status_code=404, detail=f"Model {request.model} not found")
+    # Get provider for model using new routing logic
+    provider = get_provider_for_model(request.model)
 
     # Get provider instance and route request
     provider_instance = get_provider(provider)
 
-    return await provider_instance.create_chat_completion(
-        model=request.model,
-        messages=request.messages,
-        temperature=request.temperature,
-        max_tokens=request.max_tokens,
-        top_p=request.top_p,
-        frequency_penalty=request.frequency_penalty,
-        presence_penalty=request.presence_penalty,
-        stream=request.stream,
-        stop=request.stop,
-        n=request.n,
-    )
+    # Get actual model name to send to provider (strip prefix)
+    actual_model_name = get_actual_model_name(request.model)
+
+    try:
+        return await provider_instance.create_chat_completion(
+            model=actual_model_name,
+            messages=request.messages,
+            temperature=request.temperature,
+            max_tokens=request.max_tokens,
+            top_p=request.top_p,
+            frequency_penalty=request.frequency_penalty,
+            presence_penalty=request.presence_penalty,
+            stream=request.stream,
+            stop=request.stop,
+            n=request.n,
+        )
+    except NotImplementedError as e:
+        raise HTTPException(status_code=501, detail=str(e)) from e
 
 
 @app.get("/health")

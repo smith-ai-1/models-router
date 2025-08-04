@@ -6,7 +6,6 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 from openai import OpenAI
-import httpx
 
 from src.model_router.main import app
 
@@ -25,14 +24,26 @@ def mock_openai_env():
 
 
 @pytest.fixture
+def mock_all_providers_env():
+    """Mock all provider environment variables."""
+    with patch.dict(os.environ, {
+        "OPENAI_API_KEY": "test-openai-key",
+        "ANTHROPIC_API_KEY": "test-anthropic-key",
+        "GROQ_API_KEY": "test-groq-key",
+        "DEEPSEEK_API_KEY": "test-deepseek-key",
+    }):
+        yield
+
+
+@pytest.fixture
 def openai_client_with_test_transport(test_client):
     """OpenAI client using FastAPI TestClient."""
-    
+
     # Create OpenAI client with TestClient as httpx client
     client = OpenAI(
-        base_url="http://testserver/v1", 
+        base_url="http://testserver/v1",
         api_key="test-key",
         http_client=test_client
     )
-    
+
     return client

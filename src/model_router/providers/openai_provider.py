@@ -14,6 +14,16 @@ class OpenAIProvider(BaseProvider):
         super().__init__(api_key)
         self.client = OpenAI(api_key=api_key)
 
+    def get_available_models(self) -> list[str]:
+        """Get list of available OpenAI models."""
+        return [
+            "gpt-3.5-turbo",
+            "gpt-4",
+            "gpt-4-turbo",
+            "gpt-4o",
+            "gpt-4o-mini",
+        ]
+
     async def create_chat_completion(
         self,
         model: str,

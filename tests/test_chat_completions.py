@@ -1,11 +1,9 @@
 """Tests for chat completions endpoint."""
 
-import json
 from unittest.mock import patch
 
-import pytest
-from openai.types.chat import ChatCompletion, ChatCompletionMessage
 from openai.types import CompletionUsage
+from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 
 def test_chat_completions_missing_auth(test_client):
@@ -13,11 +11,11 @@ def test_chat_completions_missing_auth(test_client):
     response = test_client.post(
         "/v1/chat/completions",
         json={
-            "model": "gpt-3.5-turbo",
+            "model": "openai/gpt-3.5-turbo",
             "messages": [{"role": "user", "content": "Hello"}]
         }
     )
-    
+
     assert response.status_code == 401
     assert "Invalid or missing API key" in response.json()["detail"]
 
@@ -32,7 +30,7 @@ def test_chat_completions_invalid_model(test_client):
             "messages": [{"role": "user", "content": "Hello"}]
         }
     )
-    
+
     assert response.status_code == 404
     assert "Model invalid-model not found" in response.json()["detail"]
 
@@ -44,11 +42,11 @@ def test_chat_completions_no_openai_key(test_client):
             "/v1/chat/completions",
             headers={"Authorization": "Bearer test-key"},
             json={
-                "model": "gpt-3.5-turbo",
+                "model": "openai/gpt-3.5-turbo",
                 "messages": [{"role": "user", "content": "Hello"}]
             }
         )
-    
+
     assert response.status_code == 401
     assert "OpenAI API key not configured" in response.json()["detail"]
 
@@ -77,33 +75,35 @@ def test_chat_completions_success(mock_openai_class, test_client, mock_openai_en
             total_tokens=15
         )
     )
-    
+
     # Configure mock
     mock_client = mock_openai_class.return_value
     mock_client.chat.completions.create.return_value = mock_response
-    
+
     response = test_client.post(
         "/v1/chat/completions",
         headers={"Authorization": "Bearer test-key"},
         json={
-            "model": "gpt-3.5-turbo",
+            "model": "openai/gpt-3.5-turbo",
             "messages": [{"role": "user", "content": "Hello"}],
             "temperature": 0.7,
             "max_tokens": 100
         }
     )
-    
+
     assert response.status_code == 200
     data = response.json()
-    
+
     assert data["id"] == "chatcmpl-test123"
     assert data["object"] == "chat.completion"
     assert data["model"] == "gpt-3.5-turbo"
     assert len(data["choices"]) == 1
-    assert data["choices"][0]["message"]["content"] == "Hello! How can I help you today?"
+    assert data["choices"][0]["message"]["content"] == (
+        "Hello! How can I help you today?"
+    )
     assert data["choices"][0]["message"]["role"] == "assistant"
     assert data["usage"]["total_tokens"] == 15
-    
+
     # Verify OpenAI client was called correctly
     mock_client.chat.completions.create.assert_called_once_with(
         model="gpt-3.5-turbo",
@@ -120,13 +120,15 @@ def test_chat_completions_success(mock_openai_class, test_client, mock_openai_en
 
 
 @patch("src.model_router.providers.openai_provider.OpenAI")
-def test_chat_completions_with_openai_client(mock_openai_class, openai_client_with_test_transport, mock_openai_env):
+def test_chat_completions_with_openai_client(
+    mock_openai_class, openai_client_with_test_transport, mock_openai_env
+):
     """Test chat completion using OpenAI client with TestClient transport."""
     # Mock OpenAI response
     mock_response = ChatCompletion(
         id="chatcmpl-test456",
         choices=[{
-            "finish_reason": "stop", 
+            "finish_reason": "stop",
             "index": 0,
             "message": ChatCompletionMessage(
                 content="I'm doing well, thank you!",
@@ -143,19 +145,19 @@ def test_chat_completions_with_openai_client(mock_openai_class, openai_client_wi
             total_tokens=14
         )
     )
-    
+
     # Configure mock
     mock_client = mock_openai_class.return_value
     mock_client.chat.completions.create.return_value = mock_response
-    
+
     # Use OpenAI client to make request
     response = openai_client_with_test_transport.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="openai/gpt-3.5-turbo",
         messages=[{"role": "user", "content": "How are you?"}],
         temperature=0.5,
         max_tokens=50
     )
-    
+
     assert response.id == "chatcmpl-test456"
     assert response.object == "chat.completion"
     assert response.model == "gpt-3.5-turbo"
@@ -163,6 +165,6 @@ def test_chat_completions_with_openai_client(mock_openai_class, openai_client_wi
     assert response.choices[0].message.content == "I'm doing well, thank you!"
     assert response.choices[0].message.role == "assistant"
     assert response.usage.total_tokens == 14
-    
+
     # Verify the underlying OpenAI client was called
     mock_client.chat.completions.create.assert_called_once()
