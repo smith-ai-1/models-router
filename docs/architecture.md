@@ -1,149 +1,96 @@
-# Architecture Principles
+Code Architecture
 
-This document outlines the core architectural patterns and principles for the Model Router project.
+Domain-Driven Design (DDD) Pattern:
 
-## Provider Pattern
+- Clear separation between domain/, services/, storages/, and api/ layers
+- Domain entities inherit from BaseEntity with KSUID generation and timestamps
+- Business logic encapsulated in service classes
 
-### Base Provider Interface
-- Each AI provider should extend `BaseProvider`
-- Implement `get_available_models()` and `create_chat_completion()`
-- Use dependency injection for API keys
-- Handle provider-specific errors appropriately
+Dependency Injection:
 
-### Provider Implementation
-```python
-class CustomProvider(BaseProvider):
-    def get_available_models(self) -> list[str]:
-        return ["model-1", "model-2"]
-    
-    async def create_chat_completion(self, **kwargs) -> ChatCompletion:
-        # Provider-specific implementation
-        pass
-```
+- Heavy use of inject library for dependency management
+- Constructor-based injection with explicit parameter declarations
+- Centralized configuration in configuration.py with binder.bind_to_constructor()
 
-### Provider Registration
-- Add provider to `PROVIDER_PREFIXES` mapping
-- Include API key validation in `get_provider()` function
-- Handle `NotImplementedError` for incomplete providers
+Storage Pattern:
 
-## Prefix-based Routing
+- Abstract storage interfaces with multiple implementations (PostgreSQL, In-Memory, Redis)
+- SQLAlchemy imperative mapping with Table definitions
+- Consistent async/await patterns throughout
 
-### Model Naming Convention
-- All models use provider prefixes: `provider/model-name`
-- Examples: `openai/gpt-4`, `anthropic/claude-3-5-sonnet`
-- Strip prefixes when sending requests to actual providers
-- Validate model existence before routing
+Code Style
 
-### Routing Logic
-1. Parse model name to extract provider prefix
-2. Look up provider in `PROVIDER_PREFIXES` mapping
-3. Get provider instance with API key validation
-4. Strip prefix from model name
-5. Route request to provider implementation
+Async-First Architecture:
 
-## API Design
+- All storage and service methods are async
+- Proper use of asyncio.to_thread() for blocking operations (YooKassa, Kucoin)
+- FastAPI for async HTTP handling
 
-### OpenAI Compatibility
-- Implement `/v1/models` and `/v1/chat/completions` endpoints
-- Use identical request/response formats as OpenAI API
-- Support all standard parameters (temperature, max_tokens, etc.)
-- Return proper HTTP status codes and error messages
+Error Handling:
 
-### Dynamic Model Discovery
-- Models are discovered dynamically from provider instances
-- `/v1/models` endpoint queries all configured providers
-- Only shows models from providers with valid API keys
-- Automatically adds provider prefixes to model IDs
+- Custom domain exceptions (EntityNotFound, StateError)
+- Comprehensive try-catch blocks with proper logging
+- Error state tracking in transaction entities
 
-## Testing Strategy
+Type Hints:
 
-### Test Architecture
-- Use `mock_all_providers_env` fixture for multi-provider tests
-- Use `mock_openai_env` for OpenAI-specific tests
-- Create separate test files for different concerns
-- Test both direct API calls and SDK integration
+- Extensive use of type annotations
+- Optional types for nullable fields
+- Pydantic models for data validation
 
-### Integration Testing
-- Use FastAPI TestClient with real OpenAI SDK
-- Mock only external API calls, not internal routing
-- Test complete request/response cycles
-- Include negative test cases (invalid models, missing keys, etc.)
+Logging:
 
-### Test Organization
-```
-tests/
-├── conftest.py              # Fixtures and test configuration
-├── test_models.py           # Model listing tests
-├── test_chat_completions.py # Chat completion tests
-├── test_prefix_routing.py   # Routing logic tests
-└── test_providers.py        # Provider-specific tests
-```
+- Structured logging with CallContext for traceability
+- Consistent log messages with context information
+- System call contexts for background processes
 
-## Error Handling
+Preferred Patterns
 
-### HTTP Status Codes
-- `401 Unauthorized`: Missing or invalid API keys
-- `404 Not Found`: Invalid model or provider
-- `501 Not Implemented`: Provider not yet implemented
-- `500 Internal Server Error`: Unexpected errors
+Service Layer:
+class TxService:
+def __init__(self, storage: Storage, adapter: Adapter, ...):
+self._storage = storage
+self._adapter = adapter
 
-### Error Response Format
-```json
-{
-  "detail": "Human-readable error message"
-}
-```
+- Private attributes with underscore prefix
+- Single responsibility per service
+- Clear method naming (process_waiting_fiat_tx, withdraw_asset)
 
-## Configuration Management
+State Management:
 
-### Environment Variables
-- Each provider requires its own API key
-- Use descriptive variable names: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
-- Validate API keys at provider instantiation
-- Gracefully handle missing keys (skip provider)
+- Explicit status transitions with set_status() method
+- Previous status tracking for audit trails
+- Status-based workflow processing
 
-### Provider Configuration
-- Centralized provider mapping in `PROVIDER_PREFIXES`
-- Lazy loading of provider instances
-- Fail-fast validation for critical configuration
+Adapter Pattern:
 
-## Extensibility
+- External service integrations (YooKassa, Kucoin) wrapped in adapters
+- Abstract base classes with concrete implementations
+- Mock implementations for testing
 
-### Adding New Providers
-1. Create provider class extending `BaseProvider`
-2. Implement required abstract methods
-3. Add provider prefix to `PROVIDER_PREFIXES`
-4. Update `get_provider()` function
-5. Add environment variable for API key
-6. Write provider-specific tests
+Data Modeling:
 
-### Adding New Endpoints
-- Follow OpenAI API specification for compatibility
-- Use Pydantic models for request/response validation
-- Include comprehensive error handling
-- Add corresponding test coverage
+- Pydantic for domain models with validation
+- Clear field naming (amount_buy, amount_sell vs generic amount)
+- Optional fields properly typed with Optional[T]
 
-## Performance Considerations
+Architecture Strengths
 
-### Caching Strategy
-- Provider instances are created per request (stateless)
-- Model lists are generated dynamically (no caching)
-- Consider adding caching for model discovery in production
+1. Separation of Concerns: Clear boundaries between layers
+2. Testability: In-memory storage implementations for testing
+3. Extensibility: Abstract interfaces allow easy swapping of implementations
+4. Observability: Comprehensive logging and error tracking
+5. Type Safety: Strong typing throughout the codebase
+6. Async Performance: Non-blocking operations for external services
 
-### Async Pattern
-- All provider methods are async for non-blocking I/O
-- Use proper async/await throughout the request pipeline
-- Handle async errors with try/catch blocks
+Notable Conventions
 
-## Security
+- File Organization: Feature-based organization within layers
+- Naming: Snake_case for variables/functions, PascalCase for classes
+- Comments: Minimal comments, self-documenting code preferred
+- Error Tracking: Errors stored in entity fields for persistence
+- Transaction Processing: Single-transaction methods for better composability
 
-### API Key Management
-- Never log or expose API keys
-- Validate API keys at provider boundary
-- Use environment variables for configuration
-- Implement proper error messages without key exposure
-
-### Request Validation
-- Use Pydantic models for strict request validation
-- Validate all input parameters
-- Sanitize error messages to prevent information leakage
+The architecture demonstrates a mature, production-ready Python service with proper abstraction layers, comprehensive
+error handling, and
+scalable async patterns.
