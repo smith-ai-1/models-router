@@ -1,11 +1,9 @@
 """OpenAI-compatible API server for model routing."""
 
-import os
 import time
 from typing import Any
 
 import uvicorn
-from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException
 from openai.types.chat import (
     ChatCompletion,
@@ -13,12 +11,11 @@ from openai.types.chat import (
 )
 from pydantic import BaseModel
 
+from .config import config
 from .providers.anthropic_provider import AnthropicProvider
 from .providers.deepseek_provider import DeepSeekProvider
 from .providers.groq_provider import GroqProvider
 from .providers.openai_provider import OpenAIProvider
-
-load_dotenv()
 
 app = FastAPI(
     title="Model Router",
@@ -58,29 +55,25 @@ PROVIDER_PREFIXES = {
 def get_provider(provider_name: str):
     """Get provider instance."""
     if provider_name == "openai":
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
+        if not config.openai_api_key:
             raise HTTPException(status_code=401, detail="OpenAI API key not configured")
-        return OpenAIProvider(api_key)
+        return OpenAIProvider(config.openai_api_key)
     elif provider_name == "anthropic":
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
+        if not config.anthropic_api_key:
             raise HTTPException(
             status_code=401, detail="Anthropic API key not configured"
         )
-        return AnthropicProvider(api_key)
+        return AnthropicProvider(config.anthropic_api_key)
     elif provider_name == "groq":
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
+        if not config.groq_api_key:
             raise HTTPException(status_code=401, detail="Groq API key not configured")
-        return GroqProvider(api_key)
+        return GroqProvider(config.groq_api_key)
     elif provider_name == "deepseek":
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if not api_key:
+        if not config.deepseek_api_key:
             raise HTTPException(
             status_code=401, detail="DeepSeek API key not configured"
         )
-        return DeepSeekProvider(api_key)
+        return DeepSeekProvider(config.deepseek_api_key)
     else:
         raise HTTPException(
             status_code=404,

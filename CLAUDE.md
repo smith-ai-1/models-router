@@ -8,7 +8,7 @@ This is a Model Router service that provides an OpenAI-compatible API for routin
 
 ## Development Workflow
 
-Follow the comprehensive development workflow documented in [.ai/workflows/dev_workflow.md](./.ai/workflows/dev_workflow.md). Key principles:
+Follow the comprehensive development workflow documented in [docs/dev_workflow.md](./docs/dev_workflow.md). Key principles:
 
 1. **Use TodoWrite tool** for complex multi-step tasks
 2. **Follow existing patterns** by reading code before implementing
@@ -18,7 +18,7 @@ Follow the comprehensive development workflow documented in [.ai/workflows/dev_w
 
 ## Architecture
 
-See [.ai/architecture.md](./.ai/architecture.md) for comprehensive architectural documentation including:
+See [docs/architecture.md](./docs/architecture.md) for comprehensive architectural documentation including:
 - Provider pattern implementation
 - Prefix-based routing system  
 - API design principles

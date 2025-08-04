@@ -10,7 +10,9 @@
       "Bash(git push:*)",
       "Bash(git pull:*)",
       "Bash(uv run:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

@@ -1,7 +1,7 @@
 """OpenAI provider implementation."""
 
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
 from .base import BaseProvider
@@ -12,7 +12,7 @@ class OpenAIProvider(BaseProvider):
 
     def __init__(self, api_key: str):
         super().__init__(api_key)
-        self.client = OpenAI(api_key=api_key)
+        self.client = AsyncOpenAI(api_key=api_key)
 
     def get_available_models(self) -> list[str]:
         """Get list of available OpenAI models."""
@@ -39,7 +39,7 @@ class OpenAIProvider(BaseProvider):
     ) -> ChatCompletion:
         """Create chat completion using OpenAI."""
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=temperature,

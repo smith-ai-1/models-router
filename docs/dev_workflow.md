@@ -35,7 +35,7 @@ This document describes the recommended development workflow for the Model Route
 
 ## Architecture
 
-See [../architecture.md](../architecture.md) for detailed architectural principles, patterns, and design decisions.
+See [architecture.md](./architecture.md) for detailed architectural principles, patterns, and design decisions.
 
 ## Code Standards
 
