@@ -30,8 +30,6 @@ This document describes the recommended development workflow for the Model Route
 
 ### 5. Git Workflow
 - **Staged commits**: Add all changes with `git add .`
-- **Descriptive messages**: Write clear commit messages explaining the changes
-- **Push immediately**: Push changes after successful commit
 
 ## Architecture
 
@@ -87,11 +85,8 @@ uv run ruff check --fix
 # Check status and diff
 git status && git diff
 
-# Commit with attribution
-git add . && git commit -m "feat: description"
-
-# Push changes
-git push origin main
+# Stage changes
+git add .
 ```
 
 ## Best Practices
