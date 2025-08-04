@@ -105,11 +105,7 @@ uv run ruff check --fix
 git status && git diff
 
 # Commit with attribution
-git add . && git commit -m "feat: description
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
+git add . && git commit -m "feat: description"
 
 # Push changes
 git push origin main
