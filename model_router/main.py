@@ -3,8 +3,6 @@
 import uvicorn
 from fastapi import FastAPI
 
-
-
 from model_router.api.routes import router
 from model_router.config import config
 
@@ -13,7 +11,7 @@ config.validate_required_keys()
 
 # Create FastAPI app
 app = FastAPI(
-    title="Model Router", 
+    title="Model Router",
     version="1.0.0",
     description="OpenAI-compatible API for routing requests to multiple AI providers"
 )

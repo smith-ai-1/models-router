@@ -1,11 +1,11 @@
 """Anthropic provider adapter."""
 
 import time
-from typing import List
 
 from model_router.domain.exceptions import ProviderNotConfiguredError
 from model_router.domain.models import ChatCompletionRequest, ChatCompletionResponse
 from model_router.domain.providers import ProviderName, ProviderPrefix
+
 from .base import ProviderAdapter
 
 
@@ -26,7 +26,7 @@ class AnthropicAdapter(ProviderAdapter):
     def is_configured(self) -> bool:
         return self._api_key is not None
 
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         return [
             "claude-3-5-sonnet-20241022",
             "claude-3-5-haiku-20241022",
@@ -38,7 +38,7 @@ class AnthropicAdapter(ProviderAdapter):
     ) -> ChatCompletionResponse:
         if not self.is_configured():
             raise ProviderNotConfiguredError("Anthropic API key not configured")
-        
+
         raise NotImplementedError("Anthropic integration not yet implemented")
 
 
@@ -56,7 +56,7 @@ class MockAnthropicAdapter(ProviderAdapter):
     def is_configured(self) -> bool:
         return True
 
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         return ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"]
 
     async def create_chat_completion(

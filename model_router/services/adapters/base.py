@@ -1,7 +1,7 @@
 """Base adapter interface for AI providers."""
 
 from abc import ABC, abstractmethod
-from typing import List, AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from model_router.domain.models import ChatCompletionRequest, ChatCompletionResponse
 
@@ -27,14 +27,14 @@ class ProviderAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         """Get list of available models from the provider."""
         pass
 
     @abstractmethod
     async def create_chat_completion(
         self, request: ChatCompletionRequest
-    ) -> ChatCompletionResponse | AsyncGenerator[str, None]:
+    ) -> ChatCompletionResponse | AsyncGenerator[str]:
         """Create a chat completion using the provider's API."""
         pass
 

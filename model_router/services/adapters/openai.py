@@ -1,14 +1,15 @@
 """OpenAI provider adapter."""
 
 import time
-from typing import List, AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion
 
-from model_router.domain.exceptions import ProviderAPIError, ModelNotSupportedError
+from model_router.domain.exceptions import ModelNotSupportedError, ProviderAPIError
 from model_router.domain.models import ChatCompletionRequest, ChatCompletionResponse
 from model_router.domain.providers import ProviderName, ProviderPrefix
+
 from .base import ProviderAdapter
 
 
@@ -30,7 +31,7 @@ class OpenAIAdapter(ProviderAdapter):
     def is_configured(self) -> bool:
         return self._api_key is not None
 
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         return [
             "gpt-3.5-turbo",
             "gpt-4",
@@ -41,13 +42,13 @@ class OpenAIAdapter(ProviderAdapter):
 
     async def create_chat_completion(
         self, request: ChatCompletionRequest
-    ) -> ChatCompletionResponse | AsyncGenerator[str, None]:
+    ) -> ChatCompletionResponse | AsyncGenerator[str]:
         if not self._client:
             raise ProviderAPIError("OpenAI client not configured")
 
         model_name = self.extract_model_name(request.model)
         available_models = await self.get_available_models()
-        
+
         if model_name not in available_models:
             raise ModelNotSupportedError(f"Model {model_name} not supported by OpenAI")
 
@@ -94,8 +95,8 @@ class MockOpenAIAdapter(ProviderAdapter):
     def is_configured(self) -> bool:
         return True
 
-    async def get_available_models(self) -> List[str]:
-        return ["gpt-3.5-turbo", "gpt-4o"]
+    async def get_available_models(self) -> list[str]:
+        return ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]
 
     async def create_chat_completion(
         self, request: ChatCompletionRequest

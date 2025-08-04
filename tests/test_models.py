@@ -4,7 +4,7 @@
 
 def test_models_endpoint_direct(test_client, mock_all_providers_env):
     """Test /v1/models endpoint directly."""
-    response = test_client.get("/v1/models")
+    response = test_client.get("/v1/models", headers={"Authorization": "Bearer test-key"})
 
     assert response.status_code == 200
     data = response.json()
@@ -35,7 +35,7 @@ def test_models_with_openai_client(
     model_ids = {model.id for model in models.data}
     assert "openai/gpt-3.5-turbo" in model_ids
     assert "openai/gpt-4" in model_ids
-    assert "anthropic/claude-3-5-sonnet" in model_ids
+    assert any("anthropic/claude-3-5-sonnet" in model_id for model_id in model_ids)
 
     # Check model structure
     first_model = models.data[0]

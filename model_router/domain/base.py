@@ -1,8 +1,7 @@
 """Base domain classes."""
 
 import datetime
-from typing import TypeVar, Generic, Optional
-from dataclasses import field
+from typing import Generic, TypeVar
 
 import ksuid
 from pydantic import BaseModel, Field
@@ -23,7 +22,7 @@ T = TypeVar("T")
 
 class BaseEntity(BaseModel):
     """Base class for all domain entities."""
-    
+
     uid: str = Field(default_factory=new_ksuid)
     created_at: datetime.datetime = Field(default_factory=utcnow)
     updated_at: datetime.datetime = Field(default_factory=utcnow)
@@ -37,11 +36,11 @@ class BaseEntity(BaseModel):
 
 class Error(BaseModel):
     """Error information model."""
-    code: Optional[str] = None
-    message: Optional[str] = None
+    code: str | None = None
+    message: str | None = None
 
 
 class DataErrorResponse(BaseModel, Generic[T]):
     """Generic response with data or error."""
-    data: Optional[T] = None
-    error: Optional[Error] = None
+    data: T | None = None
+    error: Error | None = None

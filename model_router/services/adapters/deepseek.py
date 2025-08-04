@@ -1,11 +1,11 @@
 """DeepSeek provider adapter."""
 
 import time
-from typing import List
 
 from model_router.domain.exceptions import ProviderNotConfiguredError
 from model_router.domain.models import ChatCompletionRequest, ChatCompletionResponse
 from model_router.domain.providers import ProviderName, ProviderPrefix
+
 from .base import ProviderAdapter
 
 
@@ -26,7 +26,7 @@ class DeepSeekAdapter(ProviderAdapter):
     def is_configured(self) -> bool:
         return self._api_key is not None
 
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         return [
             "deepseek-chat",
             "deepseek-coder",
@@ -37,7 +37,7 @@ class DeepSeekAdapter(ProviderAdapter):
     ) -> ChatCompletionResponse:
         if not self.is_configured():
             raise ProviderNotConfiguredError("DeepSeek API key not configured")
-        
+
         raise NotImplementedError("DeepSeek integration not yet implemented")
 
 
@@ -55,7 +55,7 @@ class MockDeepSeekAdapter(ProviderAdapter):
     def is_configured(self) -> bool:
         return True
 
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         return ["deepseek-chat", "deepseek-coder"]
 
     async def create_chat_completion(

@@ -1,11 +1,11 @@
 """Groq provider adapter."""
 
 import time
-from typing import List
 
 from model_router.domain.exceptions import ProviderNotConfiguredError
 from model_router.domain.models import ChatCompletionRequest, ChatCompletionResponse
 from model_router.domain.providers import ProviderName, ProviderPrefix
+
 from .base import ProviderAdapter
 
 
@@ -26,7 +26,7 @@ class GroqAdapter(ProviderAdapter):
     def is_configured(self) -> bool:
         return self._api_key is not None
 
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         return [
             "llama-3.1-405b-reasoning",
             "llama-3.1-70b-versatile",
@@ -39,7 +39,7 @@ class GroqAdapter(ProviderAdapter):
     ) -> ChatCompletionResponse:
         if not self.is_configured():
             raise ProviderNotConfiguredError("Groq API key not configured")
-        
+
         raise NotImplementedError("Groq integration not yet implemented")
 
 
@@ -57,7 +57,7 @@ class MockGroqAdapter(ProviderAdapter):
     def is_configured(self) -> bool:
         return True
 
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         return ["llama-3.1-70b-versatile", "llama-3.1-8b-instant"]
 
     async def create_chat_completion(

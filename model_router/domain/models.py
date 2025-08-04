@@ -1,6 +1,7 @@
 """Domain models for model router."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -11,10 +12,10 @@ class ChatMessage(BaseModel):
 
 class ChatCompletionRequest(BaseModel):
     model: str
-    messages: List[ChatMessage]
-    temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
-    stream: Optional[bool] = False
+    messages: list[ChatMessage]
+    temperature: float | None = None
+    max_tokens: int | None = None
+    stream: bool | None = False
 
 
 class ChatCompletionResponse(BaseModel):
@@ -22,12 +23,12 @@ class ChatCompletionResponse(BaseModel):
     object: str
     created: int
     model: str
-    choices: List[Dict[str, Any]]
-    usage: Optional[Dict[str, int]] = None
+    choices: list[dict[str, Any]]
+    usage: dict[str, int] | None = None
 
 
 class ProviderInfo(BaseModel):
     name: str
     prefix: str
     configured: bool
-    available_models: List[str]
+    available_models: list[str]
