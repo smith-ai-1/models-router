@@ -7,7 +7,10 @@ import pytest
 from fastapi.testclient import TestClient
 from openai import OpenAI
 
-from src.model_router.main import app
+# Set testing environment before importing app
+os.environ["TESTING"] = "true"
+
+from model_router.main import app
 
 
 @pytest.fixture

@@ -12,6 +12,7 @@ class AppConfig:
     """Application configuration from environment variables."""
 
     def __init__(self):
+        self.testing: bool = os.getenv("TESTING", "false").lower() == "true"
         self.openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
         self.anthropic_api_key: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
         self.groq_api_key: Optional[str] = os.getenv("GROQ_API_KEY")
@@ -19,6 +20,9 @@ class AppConfig:
 
     def validate_required_keys(self) -> None:
         """Validate that at least one API key is configured."""
+        if self.testing:
+            return
+            
         api_keys = [
             self.openai_api_key,
             self.anthropic_api_key,

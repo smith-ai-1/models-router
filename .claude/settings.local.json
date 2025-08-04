@@ -12,7 +12,13 @@
       "Bash(uv run:*)",
       "Bash(mv:*)",
       "Bash(cp:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(pip install:*)",
+      "Bash(TESTING=true uv run uvicorn model_router.main_new:app --reload --timeout-graceful-shutdown 0)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(TESTING=true uv run uvicorn model_router.main_new:app --port 8001)",
+      "Bash(TESTING=true uv run python -c \"\nfrom model_router.main_new import app\nimport uvicorn\nuvicorn.run(app, host=''0.0.0.0'', port=8002)\n\")"
     ],
     "deny": []
   }
